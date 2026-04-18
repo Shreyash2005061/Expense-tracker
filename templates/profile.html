@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block content %}
+
+<section class="profile-section">
+    <div class="profile-header">
+        <h1 class="profile-title">Your Profile</h1>
+        <p class="profile-subtitle">Manage your account settings</p>
+    </div>
+
+    <div class="profile-card">
+        <div class="profile-info">
+            <div class="profile-info-item">
+                <span class="profile-label">Full Name</span>
+                <span class="profile-value">{{ user.name }}</span>
+            </div>
+            <div class="profile-info-item">
+                <span class="profile-label">Email Address</span>
+                <span class="profile-value">{{ user.email }}</span>
+            </div>
+            <div class="profile-info-item">
+                <span class="profile-label">Member Since</span>
+                <span class="profile-value">April 2026</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
