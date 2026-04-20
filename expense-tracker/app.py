@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from functools import wraps
-from database.db import get_db, init_db, seed_db, create_user, validate_user
+from database.db import get_db, init_db, seed_db, create_user, validate_user, get_user_by_id
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key-change-in-production"
@@ -21,10 +21,14 @@ def register():
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
 
         # Validation
         if not name or not email or not password:
             return render_template("register.html", error="All fields are required")
+
+        if password != confirm_password:
+            return render_template("register.html", error="Passwords do not match")
 
         if len(password) < 8:
             return render_template("register.html", error="Password must be at least 8 characters")
@@ -93,11 +97,10 @@ def login_required(f):
 
 
 @app.route("/profile")
+@login_required
 def profile():
-    if 'user_id' not in session:
-        flash("Please sign in to view your profile.", "error")
-        return redirect(url_for("login"))
-    return render_template("profile.html")
+    user = get_user_by_id(session['user_id'])
+    return render_template("profile.html", user=user)
 
 
 @app.route("/expenses/add")
