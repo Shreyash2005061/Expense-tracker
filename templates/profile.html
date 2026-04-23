@@ -4,28 +4,90 @@
 
 {% block content %}
 
-<section class="profile-section">
-    <div class="profile-header">
-        <h1 class="profile-title">Your Profile</h1>
-        <p class="profile-subtitle">Manage your account settings</p>
-    </div>
-
-    <div class="profile-card">
-        <div class="profile-info">
-            <div class="profile-info-item">
-                <span class="profile-label">Full Name</span>
-                <span class="profile-value">{{ user.name }}</span>
+<section class="profile-container">
+    <!-- User Info Card -->
+    <section class="profile-section">
+        <div class="user-card">
+            <div class="user-avatar">
+                <span class="avatar-initials">{{ user_info.initials }}</span>
             </div>
-            <div class="profile-info-item">
-                <span class="profile-label">Email Address</span>
-                <span class="profile-value">{{ user.email }}</span>
-            </div>
-            <div class="profile-info-item">
-                <span class="profile-label">Member Since</span>
-                <span class="profile-value">April 2026</span>
+            <div class="user-details">
+                <h1 class="user-name">{{ user_info.name }}</h1>
+                <p class="user-email">{{ user_info.email }}</p>
+                <p class="user-member-since">Member since {{ user_info.member_since }}</p>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Summary Statistics Row -->
+    <section class="profile-section">
+        <h2 class="section-title">Summary</h2>
+        <div class="summary-stats">
+            <div class="stat-box">
+                <span class="stat-label">Total Spent</span>
+                <span class="stat-value">₹{{ "{:,}".format(summary_stats.total_spent) }}</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Transactions</span>
+                <span class="stat-value">{{ summary_stats.transaction_count }}</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Top Category</span>
+                <span class="stat-value">{{ summary_stats.top_category }}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Transaction History Table -->
+    <section class="profile-section">
+        <h2 class="section-title">Recent Transactions</h2>
+        <div class="transaction-table-wrapper">
+            <table class="transaction-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td class="col-date">{{ transaction.date }}</td>
+                        <td class="col-description">{{ transaction.description }}</td>
+                        <td class="col-category">
+                            <span class="category-badge category-{{ transaction.category.lower() }}">
+                                {{ transaction.category }}
+                            </span>
+                        </td>
+                        <td class="col-amount">₹{{ "{:,}".format(transaction.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Category Breakdown -->
+    <section class="profile-section">
+        <h2 class="section-title">Spending by Category</h2>
+        <div class="category-breakdown">
+            {% for category in categories %}
+            <div class="category-item">
+                <div class="category-header">
+                    <span class="category-item-name">{{ category.name }}</span>
+                    <span class="category-item-amount">₹{{ "{:,}".format(category.total) }}</span>
+                </div>
+                <div class="category-progress-track">
+                    <div class="category-progress-bar category-{{ category.name.lower() }}" 
+                         style="--progress: {{ category.percentage }}%"></div>
+                </div>
+                <span class="category-percentage">{{ category.percentage }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
 </section>
 
 {% endblock %}

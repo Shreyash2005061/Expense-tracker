@@ -9,7 +9,7 @@ DATABASE = os.path.join(os.path.dirname(__file__), '..', 'expense_tracker.db')
 def get_db():
     """Get database connection for current request context."""
     if 'db' not in g:
-        g.db = sqlite3.connect(DATABASE)
+        g.db = sqlite3.connect(DATABASE, timeout=10)
         g.db.row_factory = sqlite3.Row
         g.db.execute("PRAGMA foreign_keys = ON")
     return g.db
@@ -24,7 +24,7 @@ def close_db(e=None):
 
 def init_db():
     """Initialize database tables."""
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DATABASE, timeout=10)
     cursor = conn.cursor()
 
     # Users table
@@ -58,7 +58,7 @@ def init_db():
 
 def seed_db():
     """Seed database with demo user and sample expenses."""
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DATABASE, timeout=10)
     conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
 

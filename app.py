@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from functools import wraps
-from database.db import get_db, init_db, seed_db, create_user, validate_user
+from database.db import get_db, init_db, seed_db, create_user, validate_user, close_db
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key-change-in-production"
+app.teardown_appcontext(close_db)
 
 
 # ------------------------------------------------------------------ #
@@ -97,7 +98,49 @@ def profile():
     if 'user_id' not in session:
         flash("Please sign in to view your profile.", "error")
         return redirect(url_for("login"))
-    return render_template("profile.html")
+    
+    # Hardcoded profile context data
+    user_info = {
+        'name': session.get('user_name', 'User'),
+        'email': session.get('user_email', 'user@example.com'),
+        'initials': ''.join([word[0].upper() for word in session.get('user_name', 'User').split()]),
+        'member_since': 'January 15, 2024'
+    }
+    
+    # Summary statistics (hardcoded)
+    summary_stats = {
+        'total_spent': 18240,
+        'transaction_count': 34,
+        'top_category': 'Food'
+    }
+    
+    # Hardcoded transaction history
+    transactions = [
+        {'date': 'Apr 18, 2024', 'description': 'Grocery Shopping', 'category': 'Food', 'amount': 850},
+        {'date': 'Apr 17, 2024', 'description': 'Uber to Office', 'category': 'Transport', 'amount': 250},
+        {'date': 'Apr 16, 2024', 'description': 'Netflix Subscription', 'category': 'Entertainment', 'amount': 199},
+        {'date': 'Apr 15, 2024', 'description': 'Coffee at Café', 'category': 'Food', 'amount': 120},
+        {'date': 'Apr 14, 2024', 'description': 'Electricity Bill', 'category': 'Utilities', 'amount': 1200},
+        {'date': 'Apr 13, 2024', 'description': 'Movie Tickets', 'category': 'Entertainment', 'amount': 500},
+    ]
+    
+    # Hardcoded category breakdown
+    categories = [
+        {'name': 'Food', 'total': 5840, 'percentage': 32},
+        {'name': 'Transport', 'total': 2450, 'percentage': 13},
+        {'name': 'Entertainment', 'total': 3120, 'percentage': 17},
+        {'name': 'Utilities', 'total': 2800, 'percentage': 15},
+        {'name': 'Health', 'total': 1640, 'percentage': 9},
+        {'name': 'Shopping', 'total': 1350, 'percentage': 7},
+    ]
+    
+    return render_template(
+        "profile.html",
+        user_info=user_info,
+        summary_stats=summary_stats,
+        transactions=transactions,
+        categories=categories
+    )
 
 
 @app.route("/expenses/add")

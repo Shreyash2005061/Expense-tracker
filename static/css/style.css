@@ -961,6 +961,405 @@ a { color: inherit; text-decoration: none; }
     height: 100%;
 }
 
+/* ------------------------------------------------------------------ */
+/* Profile Page - Enhanced                                             */
+/* ------------------------------------------------------------------ */
+
+.profile-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 3rem 2rem;
+}
+
+.profile-section {
+    margin-bottom: 3rem;
+}
+
+.profile-section:first-child {
+    margin-top: 0;
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--ink);
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+/* User Info Card */
+.user-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.user-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.avatar-initials {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    color: var(--paper-card);
+    font-weight: 700;
+}
+
+.user-details {
+    flex: 1;
+}
+
+.user-name {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: var(--ink);
+    margin-bottom: 0.25rem;
+    font-weight: 700;
+}
+
+.user-email {
+    font-size: 1rem;
+    color: var(--ink-muted);
+    margin-bottom: 0.5rem;
+}
+
+.user-member-since {
+    font-size: 0.9rem;
+    color: var(--ink-faint);
+}
+
+/* Summary Stats */
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-box {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-muted);
+}
+
+.stat-value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: var(--ink);
+    font-weight: 700;
+}
+
+/* Transaction Table */
+.transaction-table-wrapper {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.transaction-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transaction-table thead {
+    background: var(--paper-warm);
+    border-bottom: 1px solid var(--border);
+}
+
+.transaction-table th {
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-muted);
+}
+
+.transaction-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 0.95rem;
+    color: var(--ink);
+}
+
+.transaction-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.transaction-table tbody tr:hover {
+    background: var(--paper);
+}
+
+.col-date {
+    font-weight: 500;
+    color: var(--ink-muted);
+}
+
+.col-description {
+    color: var(--ink-soft);
+}
+
+.col-amount {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+/* Category Badges */
+.category-badge {
+    display: inline-block;
+    padding: 0.35rem 0.8rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.category-food {
+    background: #fdf3e3;
+    color: #c17f24;
+}
+
+.category-transport {
+    background: #e8f0eb;
+    color: #1a472a;
+}
+
+.category-entertainment {
+    background: #f5e6ff;
+    color: #6b3fb1;
+}
+
+.category-utilities {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.category-health {
+    background: #fce4ec;
+    color: #c2185b;
+}
+
+.category-shopping {
+    background: #f0e6ff;
+    color: #7b1fa2;
+}
+
+/* Category Breakdown */
+.category-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.category-item {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.category-item-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.category-item-amount {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.category-progress-track {
+    height: 8px;
+    background: var(--border-soft);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.category-progress-bar {
+    height: 100%;
+    border-radius: 999px;
+    width: var(--progress, 50%);
+    transition: width 0.4s ease;
+}
+
+.category-progress-bar.category-food {
+    background: #c17f24;
+}
+
+.category-progress-bar.category-transport {
+    background: #1a472a;
+}
+
+.category-progress-bar.category-entertainment {
+    background: #6b3fb1;
+}
+
+.category-progress-bar.category-utilities {
+    background: #1565c0;
+}
+
+.category-progress-bar.category-health {
+    background: #c2185b;
+}
+
+.category-progress-bar.category-shopping {
+    background: #7b1fa2;
+}
+
+.category-percentage {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .profile-container {
+        padding: 2rem 1.5rem;
+    }
+
+    .user-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+    }
+
+    .avatar-initials {
+        font-size: 2rem;
+    }
+
+    .user-details {
+        flex: 1;
+    }
+
+    .summary-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .transaction-table {
+        font-size: 0.9rem;
+    }
+
+    .transaction-table th,
+    .transaction-table td {
+        padding: 0.75rem;
+    }
+
+    .category-breakdown {
+        gap: 1rem;
+    }
+
+    .category-item {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .profile-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .user-card {
+        padding: 1.5rem 1rem;
+    }
+
+    .user-name {
+        font-size: 1.4rem;
+    }
+
+    .user-email {
+        font-size: 0.9rem;
+    }
+
+    .stat-box {
+        padding: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .transaction-table {
+        font-size: 0.8rem;
+    }
+
+    .transaction-table th,
+    .transaction-table td {
+        padding: 0.5rem;
+    }
+
+    .category-badge {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+    }
+
+    .category-item {
+        padding: 1rem;
+    }
+
+    .category-header {
+        margin-bottom: 0.5rem;
+    }
+
+    .category-item-name {
+        font-size: 0.9rem;
+    }
+
+    .category-item-amount {
+        font-size: 1.1rem;
+    }
+}
+
 @media (max-width: 900px) {
     .video-modal {
         max-width: 600px;
