@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from functools import wraps
 from database.db import get_db, init_db, seed_db, create_user, validate_user, close_db
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key-change-in-production"
@@ -42,6 +43,13 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # Redirect already logged-in users to profile or the page they tried to access
+    if 'user_id' in session:
+        redirect_to = request.args.get("redirectTo")
+        if redirect_to:
+            return redirect(redirect_to)
+        return redirect(url_for("profile"))
+
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
@@ -55,7 +63,11 @@ def login():
             session["user_id"] = result["id"]
             session["user_name"] = result["name"]
             session["user_email"] = result["email"]
-            return redirect(url_for("landing"))
+            # Redirect to the page they tried to access, or to profile by default
+            redirect_to = request.args.get("redirectTo")
+            if redirect_to:
+                return redirect(redirect_to)
+            return redirect(url_for("profile"))
         else:
             return render_template("login.html", error=result)
 
@@ -94,46 +106,24 @@ def login_required(f):
 
 
 @app.route("/profile")
+@login_required
 def profile():
-    if 'user_id' not in session:
-        flash("Please sign in to view your profile.", "error")
+    user_id = session['user_id']
+
+    # Fetch live data from database
+    user_info = get_user_by_id(user_id)
+    if user_info is None:
+        flash("User not found.", "error")
+        session.clear()
         return redirect(url_for("login"))
-    
-    # Hardcoded profile context data
-    user_info = {
-        'name': session.get('user_name', 'User'),
-        'email': session.get('user_email', 'user@example.com'),
-        'initials': ''.join([word[0].upper() for word in session.get('user_name', 'User').split()]),
-        'member_since': 'January 15, 2024'
-    }
-    
-    # Summary statistics (hardcoded)
-    summary_stats = {
-        'total_spent': 18240,
-        'transaction_count': 34,
-        'top_category': 'Food'
-    }
-    
-    # Hardcoded transaction history
-    transactions = [
-        {'date': 'Apr 18, 2024', 'description': 'Grocery Shopping', 'category': 'Food', 'amount': 850},
-        {'date': 'Apr 17, 2024', 'description': 'Uber to Office', 'category': 'Transport', 'amount': 250},
-        {'date': 'Apr 16, 2024', 'description': 'Netflix Subscription', 'category': 'Entertainment', 'amount': 199},
-        {'date': 'Apr 15, 2024', 'description': 'Coffee at Café', 'category': 'Food', 'amount': 120},
-        {'date': 'Apr 14, 2024', 'description': 'Electricity Bill', 'category': 'Utilities', 'amount': 1200},
-        {'date': 'Apr 13, 2024', 'description': 'Movie Tickets', 'category': 'Entertainment', 'amount': 500},
-    ]
-    
-    # Hardcoded category breakdown
-    categories = [
-        {'name': 'Food', 'total': 5840, 'percentage': 32},
-        {'name': 'Transport', 'total': 2450, 'percentage': 13},
-        {'name': 'Entertainment', 'total': 3120, 'percentage': 17},
-        {'name': 'Utilities', 'total': 2800, 'percentage': 15},
-        {'name': 'Health', 'total': 1640, 'percentage': 9},
-        {'name': 'Shopping', 'total': 1350, 'percentage': 7},
-    ]
-    
+
+    # Add initials for avatar display
+    user_info['initials'] = ''.join([word[0].upper() for word in user_info['name'].split()])
+
+    summary_stats = get_summary_stats(user_id)
+    transactions = get_recent_transactions(user_id)
+    categories = get_category_breakdown(user_id)
+
     return render_template(
         "profile.html",
         user_info=user_info,
