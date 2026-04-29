@@ -19,6 +19,24 @@
         </div>
     </section>
 
+    <!-- Date Filter Bar -->
+    <section class="profile-section">
+        <div class="filter-bar">
+            <div class="filter-presets">
+                <a href="{{ url_for('profile') }}" class="filter-btn {% if active_preset is none %}active{% endif %}">All Time</a>
+                <a href="{{ url_for('profile', date_from=this_month_from, date_to=today) }}" class="filter-btn {% if active_preset == 'this_month' %}active{% endif %}">This Month</a>
+                <a href="{{ url_for('profile', date_from=last_3_months_from, date_to=today) }}" class="filter-btn {% if active_preset == 'last_3_months' %}active{% endif %}">Last 3 Months</a>
+                <a href="{{ url_for('profile', date_from=last_6_months_from, date_to=today) }}" class="filter-btn {% if active_preset == 'last_6_months' %}active{% endif %}">Last 6 Months</a>
+            </div>
+            <form class="filter-custom" method="GET" action="{{ url_for('profile') }}">
+                <input type="date" name="date_from" class="filter-input" value="{{ date_from or '' }}" required>
+                <span class="filter-separator">to</span>
+                <input type="date" name="date_to" class="filter-input" value="{{ date_to or '' }}" required>
+                <button type="submit" class="filter-apply">Apply</button>
+            </form>
+        </div>
+    </section>
+
     <!-- Summary Statistics Row -->
     <section class="profile-section">
         <h2 class="section-title">Summary</h2>
