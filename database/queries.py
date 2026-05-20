@@ -174,3 +174,24 @@ def get_category_breakdown(user_id):
 
     conn.close()
     return result
+
+
+def insert_expense(user_id, amount, category, date, description=None):
+    """Insert a new expense for a user. Returns (True, id) or (False, error_message)."""
+    conn = _get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            '''
+            INSERT INTO expenses (user_id, amount, category, date, description)
+            VALUES (?, ?, ?, ?, ?)
+            ''',
+            (user_id, amount, category, date, description)
+        )
+        conn.commit()
+        last_id = cursor.lastrowid
+        conn.close()
+        return True, last_id
+    except sqlite3.IntegrityError as e:
+        conn.close()
+        return False, f"Database error: {str(e)}"

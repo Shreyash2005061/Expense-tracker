@@ -109,17 +109,17 @@ def login_required(f):
 @login_required
 def profile():
     user_id = session['user_id']
-
-    # Fetch live data from database
+    
+    # Get user info
     user_info = get_user_by_id(user_id)
     if user_info is None:
         flash("User not found.", "error")
         session.clear()
         return redirect(url_for("login"))
-
-    # Add initials for avatar display
+    
     user_info['initials'] = ''.join([word[0].upper() for word in user_info['name'].split()])
 
+    # Get real data from database
     summary_stats = get_summary_stats(user_id)
     transactions = get_recent_transactions(user_id)
     categories = get_category_breakdown(user_id)
@@ -133,9 +133,85 @@ def profile():
     )
 
 
-@app.route("/expenses/add")
+@app.route("/analytics")
+@login_required
+def analytics():
+    return render_template("analytics.html")
+
+@app.route("/expenses/add", methods=["GET", "POST"])
+@login_required
 def add_expense():
-    return "Add expense — coming in Step 7"
+    if request.method == "GET":
+        return render_template("add_expense.html")
+
+    # POST handling
+    amount = request.form.get("amount", "").strip()
+    category = request.form.get("category", "").strip()
+    date = request.form.get("date", "").strip()
+    description = request.form.get("description", "").strip()
+
+    error = None
+
+    # Validate amount
+    if not amount:
+        error = "Amount is required"
+    else:
+        try:
+            amount_float = float(amount)
+            if amount_float <= 0:
+                error = "Amount must be greater than 0"
+        except ValueError:
+            error = "Amount must be a valid number"
+
+    # Validate category
+    if not error and not category:
+        error = "Category is required"
+    elif not error:
+        valid_categories = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
+        if category not in valid_categories:
+            error = "Invalid category selected"
+
+    # Validate date
+    if not error and not date:
+        error = "Date is required"
+    elif not error:
+        try:
+            from datetime import datetime
+            datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            error = "Date must be in YYYY-MM-DD format"
+
+    # Handle description
+    if not error and description == "":
+        description = None
+
+    if error:
+        return render_template("add_expense.html",
+                               error=error,
+                               amount=amount,
+                               category=category,
+                               date=date,
+                               description=description)
+
+    # Insert into DB
+    from database.queries import insert_expense
+    success, result = insert_expense(
+        session["user_id"],
+        float(amount),
+        category,
+        date,
+        description
+    )
+
+    if not success:
+        return render_template("add_expense.html",
+                               error=result,
+                               amount=amount,
+                               category=category,
+                               date=date,
+                               description=description)
+
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/edit")
