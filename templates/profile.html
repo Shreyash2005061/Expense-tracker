@@ -3,109 +3,109 @@
 {% block title %}Profile — Spendly{% endblock %}
 
 {% block content %}
-
-<section class="profile-container">
-    <!-- User Info Card -->
-    <section class="profile-section">
-        <div class="user-card">
-            <div class="user-avatar">
-                <span class="avatar-initials">{{ user_info.initials }}</span>
-            </div>
-            <div class="user-details">
-                <h1 class="user-name">{{ user_info.name }}</h1>
-                <p class="user-email">{{ user_info.email }}</p>
-                <p class="user-member-since">Member since {{ user_info.member_since }}</p>
+<section class="profile-page">
+    <div class="profile-stage">
+        <div class="profile-top-card">
+            <div class="profile-top-row">
+                <div class="profile-identity">
+                    <div class="profile-avatar">{{ user_info.initials }}</div>
+                    <div>
+                        <h1>{{ user_info.name }}</h1>
+                        <p class="profile-email">{{ user_info.email }}</p>
+                        <p class="profile-member">Member since {{ user_info.member_since }}</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('add_expense') }}" class="btn-primary btn-add-expense-top">+ Add Expense</a>
             </div>
         </div>
-    </section>
 
-    <!-- Date Filter Bar -->
-    <section class="profile-section">
-        <div class="filter-bar">
-            <div class="filter-presets">
-                <a href="{{ url_for('profile') }}" class="filter-btn {% if active_preset is none %}active{% endif %}">All Time</a>
-                <a href="{{ url_for('profile', date_from=this_month_from, date_to=today) }}" class="filter-btn {% if active_preset == 'this_month' %}active{% endif %}">This Month</a>
-                <a href="{{ url_for('profile', date_from=last_3_months_from, date_to=today) }}" class="filter-btn {% if active_preset == 'last_3_months' %}active{% endif %}">Last 3 Months</a>
-                <a href="{{ url_for('profile', date_from=last_6_months_from, date_to=today) }}" class="filter-btn {% if active_preset == 'last_6_months' %}active{% endif %}">Last 6 Months</a>
+        <div class="profile-filter-bar">
+            <div class="filter-group">
+                <a href="{{ url_for('profile', range='all') }}" class="filter-pill {% if request.args.get('range','all') == 'all' %}active{% endif %}">All Time</a>
+                <a href="{{ url_for('profile', range='month') }}" class="filter-pill {% if request.args.get('range') == 'month' %}active{% endif %}">This Month</a>
+                <a href="{{ url_for('profile', range='3months') }}" class="filter-pill {% if request.args.get('range') == '3months' %}active{% endif %}">Last 3 Months</a>
+                <a href="{{ url_for('profile', range='6months') }}" class="filter-pill {% if request.args.get('range') == '6months' %}active{% endif %}">Last 6 Months</a>
             </div>
-            <form class="filter-custom" method="GET" action="{{ url_for('profile') }}">
-                <input type="date" name="date_from" class="filter-input" value="{{ date_from or '' }}" required>
-                <span class="filter-separator">to</span>
-                <input type="date" name="date_to" class="filter-input" value="{{ date_to or '' }}" required>
-                <button type="submit" class="filter-apply">Apply</button>
+            <form method="GET" action="{{ url_for('profile') }}" class="filter-range-form">
+                <label>Date range</label>
+                <div class="range-fields">
+                    <input type="date" name="start_date" class="range-input" value="{{ request.args.get('start_date','') }}">
+                    <span class="range-separator">to</span>
+                    <input type="date" name="end_date" class="range-input" value="{{ request.args.get('end_date','') }}">
+                </div>
+                <button type="submit" class="btn-apply">Apply</button>
             </form>
         </div>
-    </section>
+    </div>
 
     <!-- Summary Statistics Row -->
     <section class="profile-section">
         <h2 class="section-title">Summary</h2>
         <div class="summary-stats">
-            <div class="stat-box">
-                <span class="stat-label">Total Spent</span>
-                <span class="stat-value">₹{{ "{:,}".format(summary_stats.total_spent) }}</span>
+            <div class="summary-card">
+                <span class="summary-label">Total Spent</span>
+                <span class="summary-value">₹{{ "{:,}".format(summary_stats.total_spent) }}</span>
             </div>
-            <div class="stat-box">
-                <span class="stat-label">Transactions</span>
-                <span class="stat-value">{{ summary_stats.transaction_count }}</span>
+            <div class="summary-card">
+                <span class="summary-label">Transactions</span>
+                <span class="summary-value">{{ summary_stats.transaction_count }}</span>
             </div>
-            <div class="stat-box">
-                <span class="stat-label">Top Category</span>
-                <span class="stat-value">{{ summary_stats.top_category }}</span>
+            <div class="summary-card">
+                <span class="summary-label">Top Category</span>
+                <span class="summary-value">{{ summary_stats.top_category }}</span>
             </div>
         </div>
-    </section>
 
-    <!-- Transaction History Table -->
-    <section class="profile-section">
-        <h2 class="section-title">Recent Transactions</h2>
-        <div class="transaction-table-wrapper">
-            <table class="transaction-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Category</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for transaction in transactions %}
-                    <tr>
-                        <td class="col-date">{{ transaction.date }}</td>
-                        <td class="col-description">{{ transaction.description }}</td>
-                        <td class="col-category">
-                            <span class="category-badge category-{{ transaction.category.lower() }}">
-                                {{ transaction.category }}
-                            </span>
-                        </td>
-                        <td class="col-amount">₹{{ "{:,}".format(transaction.amount) }}</td>
-                    </tr>
+        <div class="profile-main-grid">
+            <div class="transactions-card">
+                <div class="transactions-header">
+                    <h2>Recent Transactions</h2>
+                    <a href="{{ url_for('add_expense') }}" class="btn-primary btn-add-expense">+ Add Expense</a>
+                </div>
+                <div class="transaction-table-wrapper">
+                    <table class="transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions %}
+                            <tr>
+                                <td>{{ transaction.date }}</td>
+                                <td>{{ transaction.description }}</td>
+                                <td><span class="category-badge category-{{ transaction.category.lower() }}">{{ transaction.category }}</span></td>
+                                <td>₹{{ "{:,}".format(transaction.amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="categories-card">
+                <div class="categories-header">
+                    <h2>By Category</h2>
+                </div>
+                <div class="categories-list">
+                    {% for category in categories %}
+                    <div class="category-row">
+                        <div class="category-meta">
+                            <span class="category-name">{{ category.name }}</span>
+                            <span class="category-amount">₹{{ "{:,}".format(category.amount) }}</span>
+                        </div>
+                        <div class="category-bar-track">
+                            <div class="category-bar category-{{ category.name.lower() }}" style="width: { category.percentage }%"></div>
+                        </div>
+                    </div>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- Category Breakdown -->
-    <section class="profile-section">
-        <h2 class="section-title">Spending by Category</h2>
-        <div class="category-breakdown">
-            {% for category in categories %}
-            <div class="category-item">
-                <div class="category-header">
-                    <span class="category-item-name">{{ category.name }}</span>
-                    <span class="category-item-amount">₹{{ "{:,}".format(category.amount) }}</span>
                 </div>
-                <div class="category-progress-track">
-                    <div class="category-progress-bar category-{{ category.name.lower() }}" 
-                         style="--progress: {{ category.percentage }}%"></div>
-                </div>
-                <span class="category-percentage">{{ category.percentage }}%</span>
             </div>
-            {% endfor %}
         </div>
-    </section>
+    </div>
 </section>
-
+</section>
 {% endblock %}

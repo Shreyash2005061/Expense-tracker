@@ -45,6 +45,10 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # If already logged in, send to profile
+    if 'user_id' in session:
+        return redirect(url_for('profile'))
+
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
@@ -58,7 +62,8 @@ def login():
             session["user_id"] = result["id"]
             session["user_name"] = result["name"]
             session["user_email"] = result["email"]
-            return redirect(url_for("landing"))
+            # Redirect to profile after login
+            return redirect(url_for("profile"))
         else:
             return render_template("login.html", error=result)
 
@@ -103,9 +108,84 @@ def profile():
     return render_template("profile.html", user=user)
 
 
-@app.route("/expenses/add")
+@app.route("/expenses/add", methods=["GET", "POST"])
+@login_required
 def add_expense():
-    return "Add expense — coming in Step 7"
+    if request.method == "GET":
+        return render_template("add_expense.html")
+
+    # POST request handling
+    # Extract form data
+    amount = request.form.get("amount", "").strip()
+    category = request.form.get("category", "").strip()
+    date = request.form.get("date", "").strip()
+    description = request.form.get("description", "").strip()
+
+    # Validation
+    error = None
+
+    # Validate amount
+    if not amount:
+        error = "Amount is required"
+    else:
+        try:
+            amount_float = float(amount)
+            if amount_float <= 0:
+                error = "Amount must be greater than 0"
+        except ValueError:
+            error = "Amount must be a valid number"
+
+    # Validate category
+    if not error and not category:
+        error = "Category is required"
+    elif not error:
+        valid_categories = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
+        if category not in valid_categories:
+            error = "Invalid category selected"
+
+    # Validate date
+    if not error and not date:
+        error = "Date is required"
+    elif not error:
+        try:
+            from datetime import datetime
+            datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            error = "Date must be in YYYY-MM-DD format"
+
+    # Handle description (optional)
+    if not error and description == "":
+        description = None
+
+    # If validation fails, re-render form with error and preserved values
+    if error:
+        return render_template("add_expense.html",
+                             error=error,
+                             amount=amount,
+                             category=category,
+                             date=date,
+                             description=description)
+
+    # Insert expense into database
+    from database.queries import insert_expense
+    success, result = insert_expense(
+        session["user_id"],
+        float(amount),
+        category,
+        date,
+        description
+    )
+
+    if not success:
+        return render_template("add_expense.html",
+                             error=result,
+                             amount=amount,
+                             category=category,
+                             date=date,
+                             description=description)
+
+    # Success - redirect to profile
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/edit")
@@ -118,19 +198,39 @@ def delete_expense(id):
     return "Delete expense — coming in Step 9"
 
 
-@app.context_processor
-def inject_user():
-    """Make user info available to all templates."""
-    return {
-        'user': session.get('user_id') and {
-            'id': session.get('user_id'),
-            'name': session.get('user_name'),
-            'email': session.get('user_email')
-        }
+@app.route("/analytics")
+@login_required
+def analytics():
+    # UI-first mode: render profile with hardcoded data per spec 04-profile-page.md
+    user_info = {
+        'name': session.get('user_name', 'Demo User'),
+        'email': session.get('user_email', 'demo@spendly.com'),
+        'member_since': 'April 2026'
+    }
+    user_info['initials'] = ''.join([word[0].upper() for word in user_info['name'].split()])
+
+    summary_stats = {
+        'total_spent': 1067.00,
+        'transaction_count': 8,
+        'top_category': 'Food'
     }
 
+    transactions = [
+        {'date': '2026-04-10', 'description': 'Grocery shopping', 'category': 'Food', 'amount': 320.00},
+        {'date': '2026-04-08', 'description': 'Monthly bus pass', 'category': 'Transport', 'amount': 150.00},
+        {'date': '2026-04-05', 'description': 'Electricity bill', 'category': 'Bills', 'amount': 597.00},
+    ]
 
-if __name__ == "__main__":
-    init_db()
-    seed_db()
-    app.run(debug=True, port=5001)
+    categories = [
+        {'name': 'Food', 'amount': 320.00, 'percentage': 30},
+        {'name': 'Transport', 'amount': 150.00, 'percentage': 14},
+        {'name': 'Bills', 'amount': 597.00, 'percentage': 56},
+    ]
+
+    return render_template(
+        "profile.html",
+        user_info=user_info,
+        summary_stats=summary_stats,
+        transactions=transactions,
+        categories=categories
+    )

@@ -110,80 +110,108 @@ def login_required(f):
 @login_required
 def profile():
     user_id = session['user_id']
-
-    # Fetch live data from database
+    
+    # Get user info
     user_info = get_user_by_id(user_id)
     if user_info is None:
         flash("User not found.", "error")
         session.clear()
         return redirect(url_for("login"))
-
-    # Add initials for avatar display
+    
     user_info['initials'] = ''.join([word[0].upper() for word in user_info['name'].split()])
 
-    # Read and validate date filter params
-    date_from = request.args.get("date_from")
-    date_to = request.args.get("date_to")
-    active_preset = None
-
-    # Validate dates
-    validated_date_from = None
-    validated_date_to = None
-
-    # Compute preset dates for template
-    today = datetime.now().date()
-    this_month_from = today.replace(day=1)
-    last_3_months_from = today - timedelta(days=90)
-    last_6_months_from = today - timedelta(days=180)
-
-    if date_from and date_to:
-        try:
-            parsed_from = datetime.strptime(date_from, "%Y-%m-%d").date()
-            parsed_to = datetime.strptime(date_to, "%Y-%m-%d").date()
-
-            if parsed_from > parsed_to:
-                flash("Start date must be before end date.", "error")
-                # Fall back to no filter
-            else:
-                validated_date_from = date_from
-                validated_date_to = date_to
-
-                # Determine active preset
-                if parsed_from == this_month_from and parsed_to == today:
-                    active_preset = "this_month"
-                elif parsed_from == last_3_months_from and parsed_to == today:
-                    active_preset = "last_3_months"
-                elif parsed_from == last_6_months_from and parsed_to == today:
-                    active_preset = "last_6_months"
-                else:
-                    active_preset = "custom"
-        except ValueError:
-            # Malformed date, fall back to no filter
-            pass
-
-    summary_stats = get_summary_stats(user_id, validated_date_from, validated_date_to)
-    transactions = get_recent_transactions(user_id, date_from=validated_date_from, date_to=validated_date_to)
-    categories = get_category_breakdown(user_id, validated_date_from, validated_date_to)
+    summary_stats = get_summary_stats(user_id)
+    transactions = get_recent_transactions(user_id)
+    categories = get_category_breakdown(user_id)
 
     return render_template(
         "profile.html",
         user_info=user_info,
         summary_stats=summary_stats,
         transactions=transactions,
-        categories=categories,
-        date_from=validated_date_from,
-        date_to=validated_date_to,
-        active_preset=active_preset,
-        today=today.strftime("%Y-%m-%d"),
-        this_month_from=this_month_from.strftime("%Y-%m-%d"),
-        last_3_months_from=last_3_months_from.strftime("%Y-%m-%d"),
-        last_6_months_from=last_6_months_from.strftime("%Y-%m-%d")
+        categories=categories
     )
 
 
-@app.route("/expenses/add")
+@app.route("/analytics")
+@login_required
+def analytics():
+    return render_template("analytics.html")
+
+@app.route("/expenses/add", methods=["GET", "POST"])
+@login_required
 def add_expense():
-    return "Add expense — coming in Step 7"
+    if request.method == "GET":
+        return render_template("add_expense.html")
+
+    # POST handling
+    amount = request.form.get("amount", "").strip()
+    category = request.form.get("category", "").strip()
+    date = request.form.get("date", "").strip()
+    description = request.form.get("description", "").strip()
+
+    error = None
+
+    # Validate amount
+    if not amount:
+        error = "Amount is required"
+    else:
+        try:
+            amount_float = float(amount)
+            if amount_float <= 0:
+                error = "Amount must be greater than 0"
+        except ValueError:
+            error = "Amount must be a valid number"
+
+    # Validate category
+    if not error and not category:
+        error = "Category is required"
+    elif not error:
+        valid_categories = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
+        if category not in valid_categories:
+            error = "Invalid category selected"
+
+    # Validate date
+    if not error and not date:
+        error = "Date is required"
+    elif not error:
+        try:
+            from datetime import datetime
+            datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            error = "Date must be in YYYY-MM-DD format"
+
+    # Handle description
+    if not error and description == "":
+        description = None
+
+    if error:
+        return render_template("add_expense.html",
+                               error=error,
+                               amount=amount,
+                               category=category,
+                               date=date,
+                               description=description)
+
+    # Insert into DB
+    from database.queries import insert_expense
+    success, result = insert_expense(
+        session["user_id"],
+        float(amount),
+        category,
+        date,
+        description
+    )
+
+    if not success:
+        return render_template("add_expense.html",
+                               error=result,
+                               amount=amount,
+                               category=category,
+                               date=date,
+                               description=description)
+
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/edit")

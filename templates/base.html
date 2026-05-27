@@ -21,6 +21,8 @@
             <div class="nav-links">
                 {% if user %}
                     <span class="nav-user">Hello, {{ user.name }}</span>
+                    <a href="{{ url_for('analytics') }}" class="nav-link{% if request.path == '/analytics' %} active{% endif %}">Analytics</a>
+                    <a href="{{ url_for('add_expense') }}" class="nav-link{% if request.path == '/expenses/add' %} active{% endif %}">Add Expense</a>
                     <a href="{{ url_for('logout') }}" class="nav-logout">Sign out</a>
                 {% else %}
                     <a href="{{ url_for('login') }}">Sign in</a>
