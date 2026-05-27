@@ -39,17 +39,22 @@ def get_user_by_id(user_id):
     return result
 
 
-def get_summary_stats(user_id):
+def get_summary_stats(user_id, date_from=None, date_to=None):
     """Get summary statistics for a user. Returns dict with total_spent, transaction_count, top_category."""
     conn = _get_connection()
     cursor = conn.cursor()
 
-    # Get total spent and transaction count
-    cursor.execute('''
+    params = [user_id]
+    query = '''
         SELECT SUM(amount) as total, COUNT(*) as count
         FROM expenses
-        WHERE user_id = ?
-    ''', (user_id,))
+        WHERE user_id = ?'''
+
+    if date_from and date_to:
+        query += ' AND date BETWEEN ? AND ?'
+        params.extend([date_from, date_to])
+
+    cursor.execute(query, params)
     row = cursor.fetchone()
 
     total_spent = row['total'] if row['total'] else 0
@@ -64,14 +69,21 @@ def get_summary_stats(user_id):
         }
 
     # Get top category (highest total spending)
-    cursor.execute('''
+    params = [user_id]
+    top_query = '''
         SELECT category, SUM(amount) as category_total
         FROM expenses
-        WHERE user_id = ?
+        WHERE user_id = ?'''
+    if date_from and date_to:
+        top_query += ' AND date BETWEEN ? AND ?'
+        params.extend([date_from, date_to])
+
+    top_query += '''
         GROUP BY category
         ORDER BY category_total DESC
         LIMIT 1
-    ''', (user_id,))
+    '''
+    cursor.execute(top_query, params)
     top_row = cursor.fetchone()
     top_category = top_row['category'] if top_row else '—'
 
@@ -83,19 +95,25 @@ def get_summary_stats(user_id):
     }
 
 
-def get_recent_transactions(user_id, limit=10):
+def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
     """Get recent transactions for a user. Returns list of dicts ordered newest-first."""
     conn = _get_connection()
     cursor = conn.cursor()
 
-    cursor.execute('''
+    params = [user_id]
+    query = '''
         SELECT date, description, category, amount
         FROM expenses
-        WHERE user_id = ?
-        ORDER BY date DESC
-        LIMIT ?
-    ''', (user_id, limit))
+        WHERE user_id = ?'''
 
+    if date_from and date_to:
+        query += ' AND date BETWEEN ? AND ?'
+        params.extend([date_from, date_to])
+
+    query += ' ORDER BY date DESC LIMIT ?'
+    params.append(limit)
+
+    cursor.execute(query, params)
     rows = cursor.fetchall()
 
     transactions = []
@@ -111,17 +129,21 @@ def get_recent_transactions(user_id, limit=10):
     return transactions
 
 
-def get_category_breakdown(user_id):
+def get_category_breakdown(user_id, date_from=None, date_to=None):
     """Get category breakdown for a user. Returns list of dicts with name, amount, percentage (sums to 100)."""
     conn = _get_connection()
     cursor = conn.cursor()
 
-    # Get total spent
-    cursor.execute('''
+    params = [user_id]
+    total_query = '''
         SELECT SUM(amount) as total
         FROM expenses
-        WHERE user_id = ?
-    ''', (user_id,))
+        WHERE user_id = ?'''
+    if date_from and date_to:
+        total_query += ' AND date BETWEEN ? AND ?'
+        params.extend([date_from, date_to])
+
+    cursor.execute(total_query, params)
     total_row = cursor.fetchone()
     grand_total = total_row['total'] if total_row['total'] else 0
 
@@ -129,20 +151,24 @@ def get_category_breakdown(user_id):
         conn.close()
         return []
 
-    # Get category totals
-    cursor.execute('''
+    params = [user_id]
+    breakdown_query = '''
         SELECT category, SUM(amount) as category_total
         FROM expenses
-        WHERE user_id = ?
+        WHERE user_id = ?'''
+    if date_from and date_to:
+        breakdown_query += ' AND date BETWEEN ? AND ?'
+        params.extend([date_from, date_to])
+
+    breakdown_query += '''
         GROUP BY category
         ORDER BY category_total DESC
-    ''', (user_id,))
+    '''
+    cursor.execute(breakdown_query, params)
 
     rows = cursor.fetchall()
 
     categories = []
-    percentages = []
-
     for row in rows:
         raw_pct = (row['category_total'] / grand_total) * 100
         categories.append({
@@ -150,7 +176,6 @@ def get_category_breakdown(user_id):
             'amount': row['category_total'],
             'pct': raw_pct
         })
-        percentages.append(raw_pct)
 
     # Round percentages to integers
     for cat in categories:
@@ -159,7 +184,6 @@ def get_category_breakdown(user_id):
     # Adjust for rounding error to ensure sum is 100
     pct_sum = sum(cat['pct'] for cat in categories)
     if pct_sum != 100 and categories:
-        # Find the largest category by amount and adjust
         largest_idx = max(range(len(categories)), key=lambda i: categories[i]['amount'])
         categories[largest_idx]['pct'] += (100 - pct_sum)
 
