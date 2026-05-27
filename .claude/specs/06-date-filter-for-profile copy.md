@@ -107,4 +107,4 @@ No new dependencies.
   filter is currently applied
 - [ ] All amounts continue to display the ₹ symbol regardless of the active filter
 - [ ] A user with no expenses in the selected range sees ₹0.00 total spent, 0
-  transactions, and an empty category breakdown — no error
+  transactions, and an empty category breakdown — no errors

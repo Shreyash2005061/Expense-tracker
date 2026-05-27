@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from functools import wraps
 from database.db import get_db, init_db, seed_db, create_user, validate_user, close_db
@@ -119,7 +120,6 @@ def profile():
     
     user_info['initials'] = ''.join([word[0].upper() for word in user_info['name'].split()])
 
-    # Get real data from database
     summary_stats = get_summary_stats(user_id)
     transactions = get_recent_transactions(user_id)
     categories = get_category_breakdown(user_id)

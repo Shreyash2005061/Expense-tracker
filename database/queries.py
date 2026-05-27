@@ -39,17 +39,24 @@ def get_user_by_id(user_id):
     return result
 
 
-def get_summary_stats(user_id):
+def get_summary_stats(user_id, date_from=None, date_to=None):
     """Get summary statistics for a user. Returns dict with total_spent, transaction_count, top_category."""
     conn = _get_connection()
     cursor = conn.cursor()
 
+    # Build date filter clause
+    date_filter = ""
+    params = [user_id]
+    if date_from and date_to:
+        date_filter = "AND date BETWEEN ? AND ?"
+        params.extend([date_from, date_to])
+
     # Get total spent and transaction count
-    cursor.execute('''
+    cursor.execute(f'''
         SELECT SUM(amount) as total, COUNT(*) as count
         FROM expenses
-        WHERE user_id = ?
-    ''', (user_id,))
+        WHERE user_id = ? {date_filter}
+    ''', tuple(params))
     row = cursor.fetchone()
 
     total_spent = row['total'] if row['total'] else 0
@@ -64,14 +71,14 @@ def get_summary_stats(user_id):
         }
 
     # Get top category (highest total spending)
-    cursor.execute('''
+    cursor.execute(f'''
         SELECT category, SUM(amount) as category_total
         FROM expenses
-        WHERE user_id = ?
+        WHERE user_id = ? {date_filter}
         GROUP BY category
         ORDER BY category_total DESC
         LIMIT 1
-    ''', (user_id,))
+    ''', tuple(params))
     top_row = cursor.fetchone()
     top_category = top_row['category'] if top_row else '—'
 
@@ -83,18 +90,26 @@ def get_summary_stats(user_id):
     }
 
 
-def get_recent_transactions(user_id, limit=10):
+def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
     """Get recent transactions for a user. Returns list of dicts ordered newest-first."""
     conn = _get_connection()
     cursor = conn.cursor()
 
-    cursor.execute('''
+    # Build date filter clause
+    date_filter = ""
+    params = [user_id]
+    if date_from and date_to:
+        date_filter = "AND date BETWEEN ? AND ?"
+        params.extend([date_from, date_to])
+    params.append(limit)
+
+    cursor.execute(f'''
         SELECT date, description, category, amount
         FROM expenses
-        WHERE user_id = ?
+        WHERE user_id = ? {date_filter}
         ORDER BY date DESC
         LIMIT ?
-    ''', (user_id, limit))
+    ''', tuple(params))
 
     rows = cursor.fetchall()
 
@@ -111,17 +126,24 @@ def get_recent_transactions(user_id, limit=10):
     return transactions
 
 
-def get_category_breakdown(user_id):
+def get_category_breakdown(user_id, date_from=None, date_to=None):
     """Get category breakdown for a user. Returns list of dicts with name, amount, percentage (sums to 100)."""
     conn = _get_connection()
     cursor = conn.cursor()
 
+    # Build date filter clause
+    date_filter = ""
+    params = [user_id]
+    if date_from and date_to:
+        date_filter = "AND date BETWEEN ? AND ?"
+        params.extend([date_from, date_to])
+
     # Get total spent
-    cursor.execute('''
+    cursor.execute(f'''
         SELECT SUM(amount) as total
         FROM expenses
-        WHERE user_id = ?
-    ''', (user_id,))
+        WHERE user_id = ? {date_filter}
+    ''', tuple(params))
     total_row = cursor.fetchone()
     grand_total = total_row['total'] if total_row['total'] else 0
 
@@ -130,13 +152,13 @@ def get_category_breakdown(user_id):
         return []
 
     # Get category totals
-    cursor.execute('''
+    cursor.execute(f'''
         SELECT category, SUM(amount) as category_total
         FROM expenses
-        WHERE user_id = ?
+        WHERE user_id = ? {date_filter}
         GROUP BY category
         ORDER BY category_total DESC
-    ''', (user_id,))
+    ''', tuple(params))
 
     rows = cursor.fetchall()
 

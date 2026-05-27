@@ -36,8 +36,12 @@
                 <button type="submit" class="btn-apply">Apply</button>
             </form>
         </div>
+    </div>
 
-        <div class="profile-summary-grid">
+    <!-- Summary Statistics Row -->
+    <section class="profile-section">
+        <h2 class="section-title">Summary</h2>
+        <div class="summary-stats">
             <div class="summary-card">
                 <span class="summary-label">Total Spent</span>
                 <span class="summary-value">₹{{ "{:,}".format(summary_stats.total_spent) }}</span>
@@ -94,7 +98,7 @@
                             <span class="category-amount">₹{{ "{:,}".format(category.amount) }}</span>
                         </div>
                         <div class="category-bar-track">
-                            <div class="category-bar category-{{ category.name.lower() }}" style="width: {{ category.percentage }}%"></div>
+                            <div class="category-bar category-{{ category.name.lower() }}" style="width: { category.percentage }%"></div>
                         </div>
                     </div>
                     {% endfor %}
@@ -102,5 +106,6 @@
             </div>
         </div>
     </div>
+</section>
 </section>
 {% endblock %}
