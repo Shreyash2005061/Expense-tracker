@@ -1,8 +1,15 @@
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from functools import wraps
 from database.db import get_db, init_db, seed_db, create_user, validate_user, close_db
-from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown
+from database.queries import (
+    get_user_by_id,
+    get_summary_stats,
+    get_recent_transactions,
+    get_category_breakdown,
+    get_expense_by_id,
+    update_expense,
+)
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key-change-in-production"
@@ -214,9 +221,90 @@ def add_expense():
     return redirect(url_for("profile"))
 
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    expense = get_expense_by_id(id, session['user_id'])
+    if expense is None:
+        abort(404)
+
+    if request.method == "GET":
+        return render_template(
+            "edit_expense.html",
+            expense=expense
+        )
+
+    amount = request.form.get("amount", "").strip()
+    category = request.form.get("category", "").strip()
+    date = request.form.get("date", "").strip()
+    description = request.form.get("description", "").strip()
+
+    error = None
+
+    if not amount:
+        error = "Amount is required"
+    else:
+        try:
+            amount_float = float(amount)
+            if amount_float <= 0:
+                error = "Amount must be greater than 0"
+        except ValueError:
+            error = "Amount must be a valid number"
+
+    if not error and not category:
+        error = "Category is required"
+    elif not error:
+        valid_categories = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
+        if category not in valid_categories:
+            error = "Invalid category selected"
+
+    if not error and not date:
+        error = "Date is required"
+    elif not error:
+        try:
+            datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            error = "Date must be in YYYY-MM-DD format"
+
+    if not error and description == "":
+        description = None
+
+    if error:
+        return render_template(
+            "edit_expense.html",
+            error=error,
+            expense={
+                'id': id,
+                'amount': amount,
+                'category': category,
+                'date': date,
+                'description': description,
+            }
+        )
+
+    success, result = update_expense(
+        id,
+        session['user_id'],
+        float(amount),
+        category,
+        date,
+        description
+    )
+
+    if not success:
+        return render_template(
+            "edit_expense.html",
+            error=result,
+            expense={
+                'id': id,
+                'amount': amount,
+                'category': category,
+                'date': date,
+                'description': description,
+            }
+        )
+
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/delete")
