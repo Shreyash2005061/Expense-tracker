@@ -911,6 +911,26 @@ a { color: inherit; text-decoration: none; }
     transform: translateY(-1px);
 }
 
+.btn-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.85rem;
+    background: var(--danger);
+    color: var(--paper);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.btn-delete:hover {
+    background: var(--ink);
+    transform: translateY(-1px);
+}
+
 .expense-footer {
     margin-top: 1rem;
     text-align: center;

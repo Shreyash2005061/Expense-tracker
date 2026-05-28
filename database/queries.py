@@ -179,6 +179,23 @@ def update_expense(expense_id, user_id, amount, category, date, description=None
         return False, f"Database error: {str(e)}"
 
 
+def delete_expense(expense_id, user_id):
+    """Delete an expense owned by the given user."""
+    conn = _get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        DELETE FROM expenses
+        WHERE id = ? AND user_id = ?
+        ''',
+        (expense_id, user_id)
+    )
+    conn.commit()
+    rows_deleted = cursor.rowcount
+    conn.close()
+    return rows_deleted > 0
+
+
 def get_category_breakdown(user_id, date_from=None, date_to=None):
     """Get category breakdown for a user. Returns list of dicts with name, amount, percentage (sums to 100)."""
     conn = _get_connection()
