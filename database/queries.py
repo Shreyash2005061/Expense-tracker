@@ -270,3 +270,53 @@ def insert_expense(user_id, amount, category, date, description=None):
     except sqlite3.IntegrityError as e:
         conn.close()
         return False, f"Database error: {str(e)}"
+
+
+def get_expense_by_id(expense_id, user_id):
+    """Get a single expense by ID, only if it belongs to the given user.
+    Returns dict-like object or None if not found or not owned."""
+    conn = _get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT id, amount, category, date, description
+        FROM expenses
+        WHERE id = ? AND user_id = ?
+    ''', (expense_id, user_id))
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        'id': row['id'],
+        'amount': row['amount'],
+        'category': row['category'],
+        'date': row['date'],
+        'description': row['description']
+    }
+
+
+def update_expense(expense_id, user_id, amount, category, date, description=None):
+    """Update an expense, only if it belongs to the given user.
+    Returns True if successful, False otherwise."""
+    conn = _get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+            UPDATE expenses
+            SET amount = ?, category = ?, date = ?, description = ?
+            WHERE id = ? AND user_id = ?
+        ''', (amount, category, date, description, expense_id, user_id))
+
+        conn.commit()
+        rows_affected = cursor.rowcount
+        conn.close()
+
+        return rows_affected > 0
+    except Exception:
+        conn.close()
+        return False

@@ -100,7 +100,7 @@
                             <span class="category-amount">₹{{ "{:,}".format(category.amount) }}</span>
                         </div>
                         <div class="category-bar-track">
-                            <div class="category-bar category-{{ category.name.lower() }}" style="width: {{ category.percentage }}%"></div>
+                           <div class="category-bar category-{{ category.name.lower() }}" style="width: {{ category.percentage }}%;"></div>
                         </div>
                     </div>
                     {% endfor %}
