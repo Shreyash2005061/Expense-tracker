@@ -104,7 +104,7 @@ def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
     params.append(limit)
 
     cursor.execute(f'''
-        SELECT date, description, category, amount
+        SELECT id, date, description, category, amount
         FROM expenses
         WHERE user_id = ? {date_filter}
         ORDER BY date DESC
@@ -116,6 +116,7 @@ def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
     transactions = []
     for row in rows:
         transactions.append({
+            'id': row['id'],
             'date': row['date'],
             'description': row['description'],
             'category': row['category'],
@@ -124,6 +125,58 @@ def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
 
     conn.close()
     return transactions
+
+
+def get_expense_by_id(expense_id, user_id):
+    """Return a single expense for the given user, or None if not found."""
+    conn = _get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        '''
+        SELECT id, amount, category, date, description
+        FROM expenses
+        WHERE id = ? AND user_id = ?
+        ''',
+        (expense_id, user_id)
+    )
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        'id': row['id'],
+        'amount': row['amount'],
+        'category': row['category'],
+        'date': row['date'],
+        'description': row['description']
+    }
+
+
+def update_expense(expense_id, user_id, amount, category, date, description=None):
+    """Update an expense owned by the given user."""
+    conn = _get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            '''
+            UPDATE expenses
+            SET amount = ?, category = ?, date = ?, description = ?
+            WHERE id = ? AND user_id = ?
+            ''',
+            (amount, category, date, description, expense_id, user_id)
+        )
+        conn.commit()
+        rows_updated = cursor.rowcount
+        conn.close()
+        if rows_updated == 0:
+            return False, "Expense not found or not owned"
+        return True, None
+    except sqlite3.IntegrityError as e:
+        conn.close()
+        return False, f"Database error: {str(e)}"
 
 
 def get_category_breakdown(user_id, date_from=None, date_to=None):
