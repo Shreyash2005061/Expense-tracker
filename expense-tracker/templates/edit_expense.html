@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Expense — Spendly{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="form-container">
+        <div class="form-header">
+            <h1 class="form-title">Edit Expense</h1>
+            <p class="form-subtitle">Update the expense details and save your changes</p>
+        </div>
+
+        <div class="form-card">
+            {% if error %}
+            <div class="form-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('edit_expense', id=expense['id']) }}">
+                <div class="form-group">
+                    <label for="amount">Amount (₹)</label>
+                    <input type="number" id="amount" name="amount"
+                           class="form-input" step="0.01" min="0.01"
+                           value="{{ expense['amount'] if expense['amount'] else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" class="form-input" required>
+                        <option value="">Select a category</option>
+                        <option value="Food" {% if expense['category'] == 'Food' %}selected{% endif %}>Food</option>
+                        <option value="Transport" {% if expense['category'] == 'Transport' %}selected{% endif %}>Transport</option>
+                        <option value="Bills" {% if expense['category'] == 'Bills' %}selected{% endif %}>Bills</option>
+                        <option value="Health" {% if expense['category'] == 'Health' %}selected{% endif %}>Health</option>
+                        <option value="Entertainment" {% if expense['category'] == 'Entertainment' %}selected{% endif %}>Entertainment</option>
+                        <option value="Shopping" {% if expense['category'] == 'Shopping' %}selected{% endif %}>Shopping</option>
+                        <option value="Other" {% if expense['category'] == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" name="date"
+                           class="form-input" value="{{ expense['date'] if expense['date'] else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description (optional)</label>
+                    <input type="text" id="description" name="description"
+                           class="form-input" value="{{ expense['description'] if expense['description'] else '' }}" maxlength="200">
+                </div>
+
+                <div class="form-actions">
+                    <a href="{{ url_for('profile') }}" class="btn-secondary">Cancel</a>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
